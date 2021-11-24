@@ -1,7 +1,10 @@
 package com.file.upload.client.file.upload.controller;
 
 import com.file.upload.client.file.upload.entity.Metadata;
+import com.file.upload.client.file.upload.queue.Config;
+import com.file.upload.client.file.upload.queue.StatusMessage;
 import com.file.upload.client.file.upload.service.MetadataService;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
@@ -58,6 +61,9 @@ public class FileUploadController {
             metadata.setUserId(userId);
             metadata.setFileName(file.getOriginalFilename());
             metadata.setFileType(file.getContentType());
+
+
+
             metadata.setFileSize(file.getSize());
 
             metadataService.saveMetadata(metadata);
@@ -67,5 +73,7 @@ public class FileUploadController {
             return new ResponseEntity<>("Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
 }

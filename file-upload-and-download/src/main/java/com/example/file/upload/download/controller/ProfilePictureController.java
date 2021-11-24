@@ -1,9 +1,12 @@
 package com.example.file.upload.download.controller;
 
+import com.example.file.upload.download.queue.Config;
+import com.example.file.upload.download.queue.StatusMessage;
 import com.example.file.upload.download.service.ProfilePictureService;
 import com.example.file.upload.download.customException.CustomException;
 import com.example.file.upload.download.entity.ProfilePicture;
 import com.example.file.upload.download.payload.CustomExceptionHandlerResponse;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/profile-picture")
 public class ProfilePictureController {
@@ -20,11 +26,48 @@ public class ProfilePictureController {
     @Autowired
     private ProfilePictureService profilePictureService;
 
+    @Autowired
+    private RabbitTemplate template;
+
+
     @PostMapping(value = "/upload", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<?> uploadProfilePicture(@RequestPart("userId") String userId, @RequestPart("file")MultipartFile file){
         try{
+//          "File Upload initiated"
+            StatusMessage initialMessage = new StatusMessage();
+            initialMessage.setUserId(userId);
+            initialMessage.setMessageTime(new Date());
+            initialMessage.setStatus("File Upload initiated");
+            template.convertAndSend(Config.EXCHANGE,Config.ROUTING_KEY,initialMessage);
+
+
+
             profilePictureService.saveProfilePicture(userId, file);
-            return new ResponseEntity<>("File Upload successful", HttpStatus.OK);
+
+//          Store "File Upload successful"
+            StatusMessage uploadSuccessfulMessage = new StatusMessage();
+            uploadSuccessfulMessage.setUserId(userId);
+            uploadSuccessfulMessage.setMessageTime(new Date());
+            uploadSuccessfulMessage.setStatus("File Upload successful");
+            template.convertAndSend(Config.EXCHANGE,Config.ROUTING_KEY,uploadSuccessfulMessage);
+
+
+//          Store "File is being processed"
+            StatusMessage fileProcessingInitiatedMessage = new StatusMessage();
+            fileProcessingInitiatedMessage.setUserId(userId);
+            fileProcessingInitiatedMessage.setMessageTime(new Date());
+            fileProcessingInitiatedMessage.setStatus("File is being processed");
+            template.convertAndSend(Config.EXCHANGE,Config.ROUTING_KEY,fileProcessingInitiatedMessage);
+
+
+//          Store "File Processed successfully"
+            StatusMessage fileProcessingCompleteMessage = new StatusMessage();
+            fileProcessingCompleteMessage.setUserId(userId);
+            fileProcessingCompleteMessage.setMessageTime(new Date());
+            fileProcessingCompleteMessage.setStatus("File Processed successfully");
+            template.convertAndSend(Config.EXCHANGE,Config.ROUTING_KEY,fileProcessingCompleteMessage);
+
+            return new ResponseEntity<>("File Upload and Processed successfully", HttpStatus.OK);
         } catch (CustomException e){
             e.printStackTrace();
             CustomExceptionHandlerResponse response = new CustomExceptionHandlerResponse(e.getErrorMessage());

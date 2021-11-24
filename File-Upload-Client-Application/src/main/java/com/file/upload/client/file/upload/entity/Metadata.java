@@ -20,11 +20,8 @@ import java.util.Date;
 @Entity
 public class Metadata {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String uniqueId;
 
-    @Column(updatable = false)
+    @Id
     private String userId;
 
     private String fileName;
@@ -36,10 +33,7 @@ public class Metadata {
     @CreationTimestamp
     @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "dd-MMM-yyyy HH:mm:ss", timezone = "Asia/Kolkata")
     @Column(updatable = false)
-    private Date fileUploadedOn;
+    private Date fileUploadedRequestSentOn;
 
-    @UpdateTimestamp
-    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "dd-MMM-yyyy HH:mm:ss", timezone = "Asia/Kolkata")
-    private Date lastUpdatedOn;
 
 }
